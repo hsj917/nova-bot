@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOVA BOT 관리센터</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101522;color:#eef2ff;font-family:Arial,sans-serif}
+header{padding:24px;background:#192338;border-bottom:1px solid #34415a}
+header h1{margin:0;color:#78a9ff}
+header p{color:#aab6cc;margin-bottom:0}
+nav{display:flex;gap:8px;padding:15px;flex-wrap:wrap;background:#151e30}
+button{border:0;border-radius:8px;padding:11px 15px;background:#293750;color:white;cursor:pointer}
+button.active,button.primary{background:#3978e8}
+main{padding:20px;max-width:1000px;margin:auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.card,.panel{background:#1b263b;padding:18px;border-radius:12px;margin-bottom:15px}
+.card strong{display:block;font-size:28px;margin-top:10px;color:#78a9ff}
+h2{font-size:20px}
+input,textarea,select{width:100%;padding:12px;margin:7px 0 14px;background:#101a2b;border:1px solid #43516b;border-radius:7px;color:white}
+textarea{min-height:75px}
+label{color:#bdc9dd;font-size:14px}
+form button{width:100%}
+.item{background:#26344c;padding:13px;border-radius:8px;margin:10px 0;overflow-wrap:anywhere}
+.item small{color:#aab6cc}
+.danger{background:#a63e50}
+.hidden{display:none}
+footer{text-align:center;color:#8794aa;padding:25px;font-size:12px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>✦ NOVA BOT</h1>
+<p>커뮤니티 통합 관리센터</p>
+</header>
+
+<nav>
+<button class="active" onclick="showPage('home',this)">대시보드</button>
+<button onclick="showPage('members',this)">회원 관리</button>
+<button onclick="showPage('tickets',this)">문의 관리</button>
+<button onclick="showPage('reports',this)">신고 관리</button>
+<button onclick="showPage('warnings',this)">경고 관리</button>
+</nav>
+
+<main>
+<section id="home">
+<h2>관리 현황</h2>
+<div class="cards">
+<div class="card">등록 회원<strong id="memberCount">0</strong></div>
+<div class="card">문의 내역<strong id="ticketCount">0</strong></div>
+<div class="card">신고 내역<strong id="reportCount">0</strong></div>
+<div class="card">경고 기록<strong id="warningCount">0</strong></div>
+</div>
+<div class="panel">
+<h2>NOVA BOT 안내</h2>
+<p>회원, 문의, 신고 및 경고 내역을 관리하는 공간입니다.</p>
+<p>왼쪽 위 메뉴에서 원하는 관리 기능을 선택하세요.</p>
+</div>
+</section>
+
+<section id="members" class="hidden">
+<h2>회원 관리</h2>
+<div class="panel">
+<form id="memberForm">
+<label>회원 이름</label>
+<input id="memberName" required placeholder="회원 이름 입력">
+<label>회원 메모</label>
+<input id="memberMemo" placeholder="회원 관련 메모">
+<button class="primary">회원 등록</button>
+</form>
+</div>
+<div id="memberList"></div>
+</section>
+
+<section id="tickets" class="hidden">
+<h2>문의 관리</h2>
+<div class="panel">
+<form id="ticketForm">
+<label>문의한 회원</label>
+<input id="ticketName" required placeholder="회원 이름">
+<label>문의 내용</label>
+<textarea id="ticketContent" required placeholder="문의 내용 입력"></textarea>
+<button class="primary">문의 등록</button>
+</form>
+</div>
+<div id="ticketList"></div>
+</section>
+
+<section id="reports" class="hidden">
+<h2>신고 관리</h2>
+<div class="panel">
+<form id="reportForm">
+<label>신고 대상</label>
+<input id="reportTarget" required placeholder="신고 대상 회원">
+<label>신고 내용</label>
+<textarea id="reportContent" required placeholder="신고 내용 입력"></textarea>
+<button class="primary">신고 등록</button>
+</form>
+</div>
+<div id="reportList"></div>
+</section>
+
+<section id="warnings" class="hidden">
+<h2>경고 관리</h2>
+<div class="panel">
+<form id="warningForm">
+<label>경고 대상 회원</label>
+<input id="warningName" required placeholder="회원 이름">
+<label>경고 사유</label>
+<textarea id="warningReason" required placeholder="경고 사유 입력"></textarea>
+<button class="primary">경고 기록 추가</button>
+</form>
+</div>
+<div id="warningList"></div>
+</section>
+</main>
+
+<footer>NOVA BOT Community Management System</footer>
+
+<script>
+const keys = {
+members:"nova_members",
+tickets:"nova_tickets",
+reports:"nova_reports",
+warnings:"nova_warnings"
+};
+
+function getData(key){
+try{return JSON.parse(localStorage.getItem(keys[key])) || []}
+catch{return []}
+}
+
+function saveData(key,data){
+localStorage.setItem(keys[key],JSON.stringify(data));
+}
+
+function addItem(key,item){
+const data=getData(key);
+data.unshift({...item,id:Date.now(),date:new Date().toLocaleString("ko-KR")});
+saveData(key,data);
+render();
+}
+
+function showPage(id,button){
+document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
+document.getElementById(id).classList.remove("hidden");
+document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+button.classList.add("active");
+}
+
+function drawList(elementId,key,fields){
+const list=document.getElementById(elementId);
+const data=getData(key);
+if(!data.length){
+list.innerHTML='<div class="panel">등록된 내역이 없습니다.</div>';
+return;
+}
+list.innerHTML=data.map(item=>`
+<div class="item">
+${fields.map(field=>`<p><b>${field.label}:</b> ${escapeHTML(item[field.key])}</p>`).join("")}
+<small>${escapeHTML(item.date)}</small>
+<br><br>
+<button class="danger" onclick="deleteItem('${key}',${item.id})">삭제</button>
+</div>`).join("");
+}
+
+function escapeHTML(value){
+return String(value ?? "").replace(/[&<>"']/g,char=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+}[char]));
+}
+
+function deleteItem(key,id){
+if(!confirm("이 기록을 삭제할까요?"))return;
+saveData(key,getData(key).filter(item=>item.id!==id));
+render();
+}
+
+document.getElementById("memberForm").addEventListener("submit",e=>{
+e.preventDefault();
+addItem("members",{
+name:memberName.value.trim(),
+memo:memberMemo.value.trim()
+});
+e.target.reset();
+});
+
+document.getElementById("ticketForm").addEventListener("submit",e=>{
+e.preventDefault();
+addItem("tickets",{
+name:ticketName.value.trim(),
+content:ticketContent.value.trim()
+});
+e.target.reset();
+});
+
+document.getElementById("reportForm").addEventListener("submit",e=>{
+e.preventDefault();
+addItem("reports",{
+target:reportTarget.value.trim(),
+content:reportContent.value.trim()
+});
+e.target.reset();
+});
+
+document.getElementById("warningForm").addEventListener("submit",e=>{
+e.preventDefault();
+addItem("warnings",{
+name:warningName.value.trim(),
+reason:warningReason.value.trim()
+});
+e.target.reset();
+});
+
+function render(){
+document.getElementById("memberCount").textContent=getData("members").length;
+document.getElementById("ticketCount").textContent=getData("tickets").length;
+document.getElementById("reportCount").textContent=getData("reports").length;
+document.getElementById("warningCount").textContent=getData("warnings").length;
+
+drawList("memberList","members",[
+{label:"회원 이름",key:"name"},{label:"메모",key:"memo"}
+]);
+drawList("ticketList","tickets",[
+{label:"문의 회원",key:"name"},{label:"문의 내용",key:"content"}
+]);
+drawList("reportList","reports",[
+{label:"신고 대상",key:"target"},{label:"신고 내용",key:"content"}
+]);
+drawList("warningList","warnings",[
+{label:"경고 대상",key:"name"},{label:"경고 사유",key:"reason"}
+]);
+}
+
+render();
+</script>
+</body>
+</html>
