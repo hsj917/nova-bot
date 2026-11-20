@@ -189,6 +189,7 @@ function drawList(elementId,key,fields){
         <br><br>
         <button class="danger" onclick="deleteItem('${key}',${item.id})">삭제</button>
       ${key==="members" ? `<button onclick="editMember(${item.id})">수정</button>` : ""}
+      ${key==="members" ? `<button onclick="viewMember(${item.id})">상세 정보</button>` : ""}
       </div>
     `;
   }).join("");
@@ -217,7 +218,23 @@ function editMember(id){
   saveData("members",members);
   render();
 }
-function deleteItem(key,id){
+function viewMember(id){
+  const members=getData("members");
+  const member=members.find(item=>item.id===id);
+
+  if(!member) return;
+
+  const warnings=getData("warnings")
+    .filter(item=>item.name===member.name).length;
+
+  alert(
+    "회원 이름: "+member.name+
+    "\n회원 메모: "+(member.memo || "없음")+
+    "\n등록 날짜: "+member.date+
+    "\n누적 경고 횟수: "+warnings+"회"
+  );
+}
+  function deleteItem(key,id){
 if(!confirm("이 기록을 삭제할까요?"))return;
 saveData(key,getData(key).filter(item=>item.id!==id));
 render();
