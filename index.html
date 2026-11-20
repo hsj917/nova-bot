@@ -64,6 +64,10 @@ footer{text-align:center;color:#8794aa;padding:25px;font-size:12px}
 <section id="members" class="hidden">
 <h2>회원 관리</h2>
 <div class="panel">
+  <label>회원 검색</label>
+  <input id="memberSearch" placeholder="회원 이름 검색" oninput="searchMembers()">
+</div>
+<div class="panel">
 <form id="memberForm">
 <label>회원 이름</label>
 <input id="memberName" required placeholder="회원 이름 입력">
@@ -154,8 +158,14 @@ button.classList.add("active");
 
 function drawList(elementId,key,fields){
   const list=document.getElementById(elementId);
-  const data=getData(key);
+  let data=getData(key);
 
+  if(key==="members"){
+  const query=document.getElementById("memberSearch").value.trim().toLowerCase();
+  data=data.filter(item=>
+    String(item.name || "").toLowerCase().includes(query)
+  );
+}
   if(!data.length){
     list.innerHTML='<div class="panel">등록된 내역이 없습니다.</div>';
     return;
