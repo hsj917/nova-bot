@@ -188,6 +188,7 @@ function drawList(elementId,key,fields){
         <small>${escapeHTML(item.date)}</small>
         <br><br>
         <button class="danger" onclick="deleteItem('${key}',${item.id})">삭제</button>
+      ${key==="members" ? `<button onclick="editMember(${item.id})">수정</button>` : ""}
       </div>
     `;
   }).join("");
@@ -199,7 +200,23 @@ return String(value ?? "").replace(/[&<>"']/g,char=>({
 "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 }[char]));
 }
+function editMember(id){
+  const members=getData("members");
+  const member=members.find(item=>item.id===id);
 
+  if(!member) return;
+
+  const newName=prompt("새 회원 이름을 입력하세요",member.name);
+  if(newName===null || !newName.trim()) return;
+
+  const newMemo=prompt("새 회원 메모를 입력하세요",member.memo || "");
+
+  member.name=newName.trim();
+  member.memo=newMemo===null ? member.memo : newMemo.trim();
+
+  saveData("members",members);
+  render();
+}
 function deleteItem(key,id){
 if(!confirm("이 기록을 삭제할까요?"))return;
 saveData(key,getData(key).filter(item=>item.id!==id));
