@@ -151,21 +151,38 @@ document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"))
 button.classList.add("active");
 }
 
+
 function drawList(elementId,key,fields){
-const list=document.getElementById(elementId);
-const data=getData(key);
-if(!data.length){
-list.innerHTML='<div class="panel">등록된 내역이 없습니다.</div>';
-return;
+  const list=document.getElementById(elementId);
+  const data=getData(key);
+
+  if(!data.length){
+    list.innerHTML='<div class="panel">등록된 내역이 없습니다.</div>';
+    return;
+  }
+
+  list.innerHTML=data.map(item=>{
+    let count="";
+
+    if(key==="warnings"){
+      const total=data.filter(x=>x.name===item.name).length;
+      count=`<p><b>누적 경고 횟수:</b> ${total}회</p>`;
+    }
+
+    return `
+      <div class="item">
+        ${fields.map(field=>`
+          <p><b>${field.label}:</b> ${escapeHTML(item[field.key])}</p>
+        `).join("")}
+        ${count}
+        <small>${escapeHTML(item.date)}</small>
+        <br><br>
+        <button class="danger" onclick="deleteItem('${key}',${item.id})">삭제</button>
+      </div>
+    `;
+  }).join("");
 }
-list.innerHTML=data.map(item=>`
-<div class="item">
-${fields.map(field=>`<p><b>${field.label}:</b> ${escapeHTML(item[field.key])}</p>`).join("")}
-<small>${escapeHTML(item.date)}</small>
-<br><br>
-<button class="danger" onclick="deleteItem('${key}',${item.id})">삭제</button>
-</div>`).join("");
-}
+
 
 function escapeHTML(value){
 return String(value ?? "").replace(/[&<>"']/g,char=>({
